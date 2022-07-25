@@ -3,10 +3,10 @@ wifiDevice = []
 请填写wifi设备表
 格式
 
-[ip:port]
+['ip:port','ip:port',...]
 
 如
-[114.51.4.191:9801]
+['114.51.4.191:9801','x.x.x.x:xxxx']
 
 '''
 logLevel = 'DEBUG'
