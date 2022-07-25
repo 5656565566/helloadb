@@ -9,3 +9,10 @@ wifiDevice = []
 [114.51.4.191:9801]
 
 '''
+logLevel = 'DEBUG'
+'''
+日志等级
+NO 无错误以外日志
+DEBUG 全日志
+INFO 运行状态日志
+'''

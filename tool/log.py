@@ -1,5 +1,7 @@
+from . import config
+
 # 日志等级
-logLevel = 'DEBUG'
+logLevel = config.logLevel
 '''
 NO 无错误以外日志
 DEBUG 全日志
