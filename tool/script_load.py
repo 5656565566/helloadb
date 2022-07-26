@@ -95,6 +95,10 @@ def script_read():
                 elif line.count('按键', 0, len(line)) or line.count('keyevent', 0, len(line)):
                     keyEvent = no_space(line)
                     exec(f'cmd{"[-1]" * scriptIfDepth}.append(["keyevent", keyEvent[1]])')
+                    
+                elif line.count('打开应用', 0, len(line)) or line.count('app', 0, len(line)):
+                    app = no_space(line)
+                    exec(f'cmd{"[-1]" * scriptIfDepth}.append(["app", app[1]])')
 
                 elif line.count('结束', 0, len(line)) or line.count('end', 0, len(line)):
                     if scriptIfDepth > 0:
@@ -108,13 +112,19 @@ def script_read():
                 else:
                     Log.warning(f'发现错误语句 {line} 请检查脚本拼写')
             
+            if "name" not in data:
+                data['name'] = "无名脚本 哼哼哼啊~~~~~！！！！"
+                Log.warning(f'发现无名脚本！')
+                
+            else:
+                Log.info(f'脚本 {name[-1]} 加载成功')
+            
             cmd.append(['end'])
             data['cmd'] = cmd
 
             script.close()
 
             scriptList.append(data)
-            Log.info(f'脚本 {name[-1]} 加载成功')
 
 def no_space(cmd:str):
     '''

@@ -1,10 +1,11 @@
 from adbutils import AdbClient, adb, AdbTimeout
 from random import randint, random
-import os
 from pathlib import Path
+import os
 import time
 import threading
 import cv2
+import difflib
 
 from .log import Log
 from . import config
@@ -49,13 +50,63 @@ def run(script:dict, loopNum:int, path:Path):
             thread = threading.Thread(name=str(threadNum),target=run_scrpit,args=(script, loopNum, d, str(threadNum), path))
             thread.start()
             threadNum = threadNum + 1
+        
+        batteryLevelNoticeThread = threading.Thread(name='battery',target=battery_level_notice,args=(my,))
+        batteryLevelNoticeThread.start()
+
+
+def battery_level_notice(my:AdbClient):
+    batteryRemind = config.batteryRemind
+    battery = config.battery
+    noticeDevice = []
+    
+    try:
+        from win10toast import ToastNotifier
+    except:
+        EnableWin10Toast = False
+        Log.debug(f'未找到库 win10toast')
+    
+    else:
+        EnableWin10Toast = True
+    
+    while batteryRemind and threadNum != 0:
+        for d in my.device_list():
+
+            try:
+                deviceBattery = int(difflib.get_close_matches('level', d.shell("dumpsys battery", timeout=0.5).replace(' ','').split('\n'), 1, cutoff=0.6)[0].split(':')[1])
+            except:
+                if d:
+                    Log.debug(f'设备 {d.serial} 电量无法获取')
+                else:
+                    Log.debug(f'设备可能掉线')
+
+            else:
+
+                if deviceBattery < battery and d.serial not in noticeDevice:
+                    Log.warning(f'设备 {d.serial} 电量低于 {battery}')
+                    
+                    if EnableWin10Toast:
+                        toaster = ToastNotifier()
+                        toaster.show_toast(
+                            "电量提醒",
+                            f"设备 {d.serial} 电量低于 {battery}",
+                            icon_path=None,
+                            duration=10)
+                    
+                    noticeDevice.append(d.serial)
+                if deviceBattery >= battery and d.serial in noticeDevice:
+                    Log.debug(f'设备 {d.serial} 电量恢复预设值')
+                    noticeDevice.remove(d.serial)
+                    
+        time.sleep(2)
+
 
 def run_scrpit(script:dict, loopNum:int, my:AdbClient, dId:str, path:Path):
 
     global threadNum
 
     while (loopNum > 0):
-        Log.info(f'脚本执行剩余 {loopNum} 次')
+        Log.info(f'{my.serial} 脚本执行剩余 {loopNum} 次')
         for cmd in script['cmd']:
             if "click" in cmd:
                 click(my, cmd)
@@ -76,6 +127,9 @@ def run_scrpit(script:dict, loopNum:int, my:AdbClient, dId:str, path:Path):
             elif "findclick" in cmd:
                 screenshot(my, dId)
                 find_click(my, dId, cmd[1], path)
+
+            elif "app" in cmd:
+                open_app(my, cmd)
 
             elif "end" in cmd:
                 Log.debug(f'脚本执行到末尾')
@@ -120,6 +174,9 @@ def scriptif(my:AdbClient, cmdIf:list, dId:str, path:Path):
             screenshot(my, dId)
             find_click(my, dId, cmd[1], path)
 
+        elif "app" in cmd:
+            open_app(my, dId)
+
         elif "findif" in cmd:
 
             screenshot(my, dId)
@@ -128,6 +185,19 @@ def scriptif(my:AdbClient, cmdIf:list, dId:str, path:Path):
                 Log.debug(f'条件找图 {cmd[1]} 判断成功')
 
                 scriptif(my, cmd[2:], dId, path)
+
+
+def open_app(my:AdbClient, cmd:list):
+    '''
+    开启app操作
+    '''
+    appActivity = config.appActivity
+
+    if cmd[1] in appActivity:
+        my.shell(f'am start {appActivity[cmd[1]]}', timeout=0.5)
+        Log.debug(f'{cmd[1]} 打开成功')
+    else:
+        Log.warning(f'{cmd[1]} 不存在于 appActivity 记录中 前往config 配置后重启程序')
 
 def click(my:AdbClient, cmd:list):
     '''
