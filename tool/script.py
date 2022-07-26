@@ -73,7 +73,7 @@ def battery_level_notice(my:AdbClient):
         for d in my.device_list():
 
             try:
-                deviceBattery = int(difflib.get_close_matches('level', d.shell("dumpsys battery", timeout=0.5).replace(' ','').split('\n'), 1, cutoff=0.6)[0].split(':')[1])
+                deviceBattery = int(difflib.get_close_matches('level', d.shell("dumpsys battery", timeout=1).replace(' ','').split('\n'), 1, cutoff=0.6)[0].split(':')[1])
             except:
                 if d:
                     Log.debug(f'设备 {d.serial} 电量无法获取')
@@ -202,7 +202,7 @@ def open_app(my:AdbClient, cmd:list):
     appActivity = config.appActivity
 
     if cmd[1] in appActivity:
-        my.shell(f'am start {appActivity[cmd[1]]}', timeout=0.5)
+        my.shell(f'am start {appActivity[cmd[1]]}', timeout=2)
         Log.debug(f'{cmd[1]} 打开成功')
     else:
         Log.warning(f'{cmd[1]} 不存在于 appActivity 记录中 前往config 配置后重启程序')
