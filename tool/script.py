@@ -143,6 +143,10 @@ def run_scrpit(script:dict, loopNum:int, my:AdbClient, dId:str, path:Path):
                     Log.debug(f'条件找图 {cmd[1]} 判断成功')
 
                     scriptif(my, cmd[2:], dId, path)
+                    
+                else:
+                    Log.debug(f'条件找图 {cmd[1]} 判断失败')
+
 
         loopNum = loopNum - 1
 
@@ -186,6 +190,9 @@ def scriptif(my:AdbClient, cmdIf:list, dId:str, path:Path):
                 Log.debug(f'条件找图 {cmd[1]} 判断成功')
 
                 scriptif(my, cmd[2:], dId, path)
+            
+            else:
+                Log.debug(f'条件找图 {cmd[1]} 判断失败')
 
 
 def open_app(my:AdbClient, cmd:list):
