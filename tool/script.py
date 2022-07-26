@@ -130,6 +130,7 @@ def run_scrpit(script:dict, loopNum:int, my:AdbClient, dId:str, path:Path):
 
             elif "app" in cmd:
                 open_app(my, cmd)
+                script['cmd'].remove(cmd)
 
             elif "end" in cmd:
                 Log.debug(f'脚本执行到末尾')
