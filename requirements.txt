@@ -1,2 +1,4 @@
 opencv-python
 adbutils
+yaml
+numpy
