@@ -75,7 +75,6 @@ def run():
 
                 else:
                     script.script_run(scripts_name[int(cmd[1]) -1])
-                
 
             if cmd == "debug":
                 for script in script.scripts.values():

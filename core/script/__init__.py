@@ -110,7 +110,7 @@ class ScriptManage:
 
         logger.opt(colors=True).success(f"<g>加载完成</g>")
 
-    def script_run(self, script_name):
+    def script_run(self, script_name, loop_num : int = 1):
         for device in self.devices:
 
             logger.opt(colors=True).info(f"<y>{device.serial}</y> : <g>开始运行脚本</g>")
@@ -118,7 +118,10 @@ class ScriptManage:
             func = Func(device=device, script=self.scripts[script_name])
             func.default_offset = self.default_offset
             func.appActivitys = self.appActivitys
-            func._run_script()
+            
+            for i in range(0, loop_num):
+                logger.opt(colors=True).info(f"已经执行 <g>{i + 1}</g> 次 ! 剩余 <g>{loop_num - i - 1}</g> 次")
+                func._run_script()
 
         if len(self.devices) == 0:
             logger.opt(colors=True).warning("<r>无设备 !</r>")
