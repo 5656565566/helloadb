@@ -142,14 +142,14 @@ class ScriptManage:
 
         i = 0
 
-        if 1:
+        try:
             while loop_num - i:
 
                 logger.opt(colors=True).info(f"已经执行 <g>{i + 1}</g> 次 ! 剩余 <g>{loop_num - i - 1}</g> 次")
                 func._run_script()
                 i = i + 1
-        #except Exception as e:
-        #    logger.opt(colors=True).debug(f"{func.device.serial}线程意外退出 {e}")
+        except Exception as e:
+            logger.opt(colors=True).debug(f"{func.device.serial}线程意外退出 {e}")
 
     def script_run(self, script_name, loop_num : int = 1):
 

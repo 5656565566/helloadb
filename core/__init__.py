@@ -40,14 +40,14 @@ def run():
             cmd = menu.in_run()
 
             if cmd == "list":
-                scripts = script.scripts.keys()
-                logger.opt(colors=True).info(f"已经加载 <g>{len(scripts)}</g> 个脚本")
+                _scripts = script.scripts.keys()
+                logger.opt(colors=True).info(f"已经加载 <g>{len(_scripts)}</g> 个脚本")
 
                 n = 0
 
-                for script in scripts:
+                for _script in _scripts:
                     n = n + 1
-                    logger.opt(colors=True).info(f"{n}. <g>{script}</g>")
+                    logger.opt(colors=True).info(f"{n}. <g>{_script}</g>")
 
             if cmd == "devices":
                 
