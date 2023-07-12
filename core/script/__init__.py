@@ -19,11 +19,17 @@ tempPath = mianPath / "temp"
 # 脚本目录
 scriptPath = mianPath / "scripts"
 
+# 附加功能目录
+pluginsPath = mianPath / "plugins"
+
 if not tempPath.is_dir():
     os.mkdir("temp")
 
 if not scriptPath.is_dir():
     os.mkdir("script")
+    
+if not pluginsPath.is_dir():
+    os.mkdir("plugins")
 
 def script_dir_get():
     """
@@ -110,28 +116,57 @@ class ScriptManage:
 
         logger.opt(colors=True).success(f"<g>加载完成</g>")
 
-    def script_run(self, script_name, loop_num : int = 1):
+    def _threads_run(self, script_name, loop_num):
+        # 提交多个任务到线程池，并存储线程对象
         for device in self.devices:
-
+            thread = threading.Thread(target = self._script_loop, args=(device, script_name, loop_num))
             logger.opt(colors=True).info(f"<y>{device.serial}</y> : <g>开始运行脚本</g>")
+            self.threads[device.serial] = thread
 
-            func = Func(device=device, script=self.scripts[script_name])
-            func.default_offset = self.default_offset
-            func.appActivitys = self.appActivitys
-            
-            for i in range(0, loop_num):
+        for thread in self.threads.values():
+            # 设置子线程为守护线程（可选）
+            thread.daemon = True
+
+            global is_running
+            is_running = True
+
+            # 启动子线程
+            thread.start()
+
+    def _script_loop(self, device, script_name, loop_num : int = 1):
+
+        func = Func(script=self.scripts[script_name])
+        func.device = device
+        func.default_offset = self.default_offset
+        func.appActivitys = self.appActivitys
+
+        i = 0
+
+        if 1:
+            while loop_num - i:
+
                 logger.opt(colors=True).info(f"已经执行 <g>{i + 1}</g> 次 ! 剩余 <g>{loop_num - i - 1}</g> 次")
                 func._run_script()
+                i = i + 1
+        #except Exception as e:
+        #    logger.opt(colors=True).debug(f"{func.device.serial}线程意外退出 {e}")
+
+    def script_run(self, script_name, loop_num : int = 1):
 
         if len(self.devices) == 0:
             logger.opt(colors=True).warning("<r>无设备 !</r>")
+            return 0
+
+        self._threads_run(script_name, loop_num)
+
 
     def run(self, device_id, script):
         if device := self.devices[device_id]:
 
             logger.opt(colors=True).info(f"<y>{device.serial}</y> : <g>开始运行脚本</g>")
 
-            func = Func(device=device, script=script)
+            func = Func(script=script)
+            func.device = device
             func._run_script()
 
         else:
@@ -176,8 +211,9 @@ class ScriptManage:
                     try:
                         deep, _script_cmd = self.script_cmd(cmd)
 
-                    except:
+                    except Exception as e:
                         logger.opt(colors=True).error(f"<y>脚本{script_.name}-line {line_num}</y> : <r>语句错误！</r>")
+                        logger.opt(colors=True).debug(f"<r>{e}</r>")
 
                     else:
                     
@@ -205,10 +241,10 @@ class ScriptManage:
             return (0, Name(name = cmd[1]))
 
         if cmd[0] in ["click", "点击"]:
-            return (0, Click(x= cmd[1], y= cmd[2], random= (None if len(cmd) > 2 else cmd[3])))
+            return (0, Click(x= cmd[1], y= cmd[2], random= (cmd[3] if len(cmd) > 2 else None)))
 
         if cmd[0] in ["swipe", "滑动"]:
-            return (0, Swipe(x1= cmd[1], y1= cmd[2], x2= cmd[3], y2= cmd[4], time= cmd[5], random= (None if len(cmd) > 5 else cmd[6])))
+            return (0, Swipe(x1= cmd[1], y1= cmd[2], x2= cmd[3], y2= cmd[4], time= cmd[5], random= (cmd[6] if len(cmd) > 5 else None)))
 
         if cmd[0] in ["keyevent", "模拟按键"]:
             return (0, Keyevent(key_id= cmd[1]))
@@ -220,7 +256,17 @@ class ScriptManage:
             return (0, OpenApp(appActivity= cmd[1]))
             
         if cmd[0] in ["sleep", "延迟"]:
-            return (0, Sleep(time= cmd[1], random= (None if len(cmd) > 1 else cmd[2])))
+            
+            random = None
+
+            if len(cmd) > 2:
+                random = cmd[2]
+
+            if random:
+                if int(random) >= int(cmd[1]):
+                    random = None
+
+            return (0, Sleep(time= cmd[1], random= random))
 
         if cmd[0] in ["init","初始化"]:
             return (1, RunOne())
@@ -238,7 +284,9 @@ class ScriptManage:
             return (1, RunLoopIf(conditions= cmd[1], loop_if= cmd[2:]))
 
         if cmd[0] in ["run","执行脚本"]:
-            return (0, RunScipt(name= cmd[1]))
+
+            if temp := self.scripts.get(cmd[1]):
+                return (0, RunScipt(data=temp))
         
         if cmd[0] in ["random","随机"]:
             return (1, RandomRun(name= cmd[1]))
@@ -250,9 +298,9 @@ class ScriptManage:
 class Func:
     """执行adb脚本"""
 
-    def __init__(self, device: AdbDevice, script: Script) -> None:
+    def __init__(self, script: Script) -> None:
         self.default_offset = 3
-        self.device = device
+        self.device : AdbDevice = None
         self.temp = {"run_one" : []} # 用于脚本执行中的数据缓存
         self.script = script
         self.appActivitys = {}
@@ -261,19 +309,11 @@ class Func:
 
         if script:
             for cmd in script:
-
-                if cmd.cmd == "run_scipt":
-                    return cmd.name
-
                 func = getattr(self, cmd.cmd)
                 if func(cmd):
                     self._run_script(cmd.data)
         else:
             for cmd in self.script.data:
-
-                if cmd.cmd == "run_scipt":
-                    return cmd.name
-
                 func = getattr(self, cmd.cmd)
                 if func(cmd):
                     self._run_script(cmd.data)
@@ -281,7 +321,7 @@ class Func:
     def name(self, args: Name):
         logger.opt(colors=True).debug(f"<y>开始运行脚本</y> : <r>{args.name}</r>")
 
-    def _offset(self, offset = None):
+    def _offset(self, offset: int = False):
         """偏移"""
 
         if not offset:
@@ -293,15 +333,33 @@ class Func:
         """随机"""
         return random() < probability
 
+    def get_activity(self, args: GetActivity):
+        logger.debug("执行 GetActivity")
+
+        msg = self.device.shell(f'dumpsys window', timeout=2)
+    
+        for line in msg.split("\n"):
+            if 'mCurrentFocus' in line:
+                msg = line
+                break
+
+        start_index = msg.find("{")
+        end_index = msg.find("}")
+
+        logger.opt(colors=True).info(f"当前 Activity <g>{msg[start_index+1:end_index].split(' ')[-1]}</g>")
+
     def sleep(self, args: Sleep):
-        logger.debug("执行 Sleep")
-        time.sleep(args.time)
+        
+        _time = args.time + self._offset(args.random)
+
+        logger.debug(f"执行 Sleep {_time}")
+        time.sleep(_time)
         return 0
 
     def click(self, args: Click) -> int:
 
-        x = args.x + (self._offset(args.random) if args.random else 0)
-        y = args.y + (self._offset(args.random) if args.random else 0)
+        x = args.x + self._offset(args.random)
+        y = args.y + self._offset(args.random)
 
         self.device.click(x, y)
         logger.debug("执行 Click")
@@ -309,10 +367,10 @@ class Func:
     
     def swipe(self, args: Swipe) -> int:
 
-        x1 = args.x1 + (self._offset(args.random) if args.random else 0)
-        y1 = args.y1 + (self._offset(args.random) if args.random else 0)
-        x2 = args.x2 + (self._offset(args.random) if args.random else 0)
-        y2 = args.y2 + (self._offset(args.random) if args.random else 0)
+        x1 = args.x1 + self._offset(args.random)
+        y1 = args.y1 + self._offset(args.random)
+        x2 = args.x2 + self._offset(args.random)
+        y2 = args.y2 + self._offset(args.random)
         time = args.time
         self.device.swipe(x1, y1, x2, y2, time)
         logger.debug("执行 swipe")
@@ -336,15 +394,22 @@ class Func:
 
         path = self.script.files
 
-        if ".txt" in str(self.script.files):
+        if os.path.isfile(self.script.files):
             path = tempPath
+
+        else:
+            path = tempPath / path.name
+
+        if not os.path.exists(path):
+            os.mkdir(path)
 
         try:
             self.device.screenshot().save(path / f"{self.device.serial}.png")
         except:
             logger.opt(colors=True).warning(f'无法为 <y>{self.device.serial}</y> 截图 请检查设备状态')
         else:
-            logger.debug("执行 Screenshot")
+            logger.debug(f"执行 Screenshot 保存到 {path / f'{self.device.serial}.png'}")
+
         return 0
     
     def find_picture(self, args: FindPicture) -> int:
@@ -360,15 +425,20 @@ class Func:
             logger.opt(colors=True).warning(f'无法为 <y>{self.device.serial}</y> 截图 请检查设备状态')
 
         templatePath = path / f"{self.device.serial}.png"
-    
-        targetPath = path / f"{args.conditions if len(args.conditions.split('.')) > 1 else args.conditions + '.png'}"
+
+        if len(args.conditions.split('.')) > 1:
+            filename = args.conditions
+        else:
+            filename = args.conditions + '.png'
+
+        targetPath = path / filename
 
         if not os.path.exists(targetPath):
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(templatePath)
-        target = cv2.imread(targetPath)
+        template = cv2.imread(str(templatePath))
+        target = cv2.imread(str(targetPath))
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -404,8 +474,8 @@ class Func:
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(templatePath)
-        target = cv2.imread(targetPath)
+        template = cv2.imread(str(templatePath))
+        target = cv2.imread(str(targetPath))
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -448,6 +518,12 @@ class Func:
 
     def run_loop_if(self, args: RunLoopIf):
         logger.debug(f"执行 RunLoopIf TODO")
+        return 0
+    
+    def run_scipt(self, args: RunScipt):
+        logger.debug(f"执行 RunScipt")
+        logger.opt(colors=True).info(f"调用脚本 <g>{args.data.name}</g>")
+        self._run_script(args.data.data)
         return 0
     
 def customized_match(target, template, threshold=0.02):

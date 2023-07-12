@@ -1,16 +1,25 @@
 from pathlib import Path
+
+import time
 import os
 
 from .log import logger, default_filter
-from .script import ScriptManage, Screenshot, Script
+from .script import ScriptManage, Screenshot, Script, GetActivity
 from .config import config
 from .menu import Menu
-
+from .plugin import PluginManager
 
 def run():
     """主运行函数"""
-    logger.info('正在加载...')
+    logger.info("正在加载...")
     script = ScriptManage()
+    plugin = PluginManager(["scrcpy"])
+    plugin.load_plugins()
+
+    scrcpy = plugin.get_plugin_executable_path("scrcpy.exe")
+
+    if scrcpy:
+        logger.info("检测到 scrcpy 的可执行文件")
 
     config.load()
 
@@ -61,11 +70,19 @@ def run():
 
                 script.run(int(cmd[1]) - 1, Script(name="run", files=Path(os.getcwd()), data = [Screenshot()]))
 
+            if "getactivity" in cmd:
+                
+                cmd = cmd.split(" ")
+
+                script.run(int(cmd[1]) - 1, Script(name="run", files=Path(os.getcwd()), data = [GetActivity()]))
+
             if cmd == "reload":
                 script.reload()
 
             if "run" in cmd:
                 
+                menu.temp["cmd"] = "run"
+
                 scripts_name = list(script.scripts.keys())
                 
                 cmd = cmd.split(" ")
@@ -76,9 +93,27 @@ def run():
                 else:
                     script.script_run(scripts_name[int(cmd[1]) -1])
 
+                while script.threads.keys():
+                    time.sleep(3)
+                    for thread in script.threads.keys():
+                        if not script.threads[thread].is_alive():
+                            break
+
             if cmd == "debug":
                 for script in script.scripts.values():
                     logger.debug(script)
+        
+        except KeyboardInterrupt:
 
+            if menu.temp.get("cmd") == "run":
+                logger.opt(colors=True).info("脚本已停止运行！")
+                exit()
+            
+            else:
+                print("")
+                logger.opt(colors=True).info("程序已关闭 !")
+                exit()
+        
         except Exception as e:
             logger.opt(colors=True).error(f"<r>发生错误</r> <y>{e}</y>")
+        

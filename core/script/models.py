@@ -25,6 +25,9 @@ class SpecialFunc(BaseModel):
     cmd : str
     """命令"""
 
+class GetActivity(SpecialFunc):
+    cmd: Optional[str] = "get_activity"
+
 class Custom(BaseModel):
     """自定义"""
     shell : str
@@ -35,7 +38,7 @@ class Custom(BaseModel):
 class Sleep(BaseModel):
     cmd: Optional[str] = "sleep"
     time : int
-    random : Optional[Union[bool, int]]
+    random : Optional[Union[bool, int]] = False
 
 AllFunc = Union[Type[TBasicAdbFunc], Type[SpecialFunc], Type[Sleep], Type[Custom]]
 
@@ -46,7 +49,7 @@ class Click(BasicAdbFunc):
     """坐标 x"""
     y : int
     """坐标 x"""
-    random : Optional[Union[bool, int]]
+    random : Optional[Union[bool, int]] = False
     """随机"""
 
 class Swipe(BasicAdbFunc):
@@ -57,7 +60,7 @@ class Swipe(BasicAdbFunc):
     x2 : int
     y2 : int
     time : float
-    random : Optional[Union[bool, int]]
+    random : Optional[Union[bool, int]] = False
     """随机"""
 
 class Keyevent(BasicAdbFunc):
