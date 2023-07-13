@@ -1,4 +1,5 @@
 from pathlib import Path
+import threading
 
 import time
 import os
@@ -93,11 +94,11 @@ def run():
                 else:
                     script.script_run(scripts_name[int(cmd[1]) -1])
 
-                while script.threads.keys():
+                while any_thread_alive(script.threads.values()):
                     time.sleep(3)
-                    for thread in script.threads.keys():
-                        if not script.threads[thread].is_alive():
-                            break
+                
+                continue
+
 
             if cmd == "debug":
                 for script in script.scripts.values():
@@ -116,4 +117,10 @@ def run():
         
         except Exception as e:
             logger.opt(colors=True).error(f"<r>发生错误</r> <y>{e}</y>")
-        
+
+
+def any_thread_alive(thread_list: list[threading.Thread]):
+    for thread in thread_list:
+        if thread.is_alive():
+            return True
+    return False

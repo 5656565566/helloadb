@@ -144,12 +144,14 @@ class ScriptManage:
 
         try:
             while loop_num - i:
-
-                logger.opt(colors=True).info(f"已经执行 <g>{i + 1}</g> 次 ! 剩余 <g>{loop_num - i - 1}</g> 次")
+                logger.opt(colors=True).info(f"开始执行第 <g>{i + 1}</g> 次 ! 剩余 <g>{loop_num - i - 1}</g> 次")
                 func._run_script()
                 i = i + 1
         except Exception as e:
-            logger.opt(colors=True).debug(f"{func.device.serial}线程意外退出 {e}")
+            logger.opt(colors=True).debug(f"{func.device.serial} 线程意外退出 {e}")
+
+        else:
+            logger.opt(colors=True).info(f"{func.device.serial} 执行完毕 !")
 
     def script_run(self, script_name, loop_num : int = 1):
 
@@ -281,6 +283,9 @@ class ScriptManage:
             return (1, RunLoop(loop_num= cmd[1]))
 
         if cmd[0] in ["loopif","条件循环"]:
+            
+
+
             return (1, RunLoopIf(conditions= cmd[1], loop_if= cmd[2:]))
 
         if cmd[0] in ["run","执行脚本"]:
