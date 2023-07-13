@@ -442,8 +442,8 @@ class Func:
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(str(templatePath))
-        target = cv2.imread(str(targetPath))
+        template = cv2.imread(get_cv2_path(templatePath))
+        target = cv2.imread(get_cv2_path(targetPath))
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -479,8 +479,8 @@ class Func:
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(str(templatePath))
-        target = cv2.imread(str(targetPath))
+        template = cv2.imread(get_cv2_path(templatePath))
+        target = cv2.imread(get_cv2_path(targetPath))
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -565,3 +565,13 @@ def customized_match(target, template, threshold=0.02):
 
     # 返回匹配位置的坐标
     return (x, y)
+
+def get_cv2_path(path: Path) -> str:
+    # 将Path对象转换为字符串
+    path_str = str(path)
+
+    # 如果路径包含中文或其他非ASCII字符，则进行编码转换
+    if not path_str.isascii():
+        path_str = path_str.encode('utf-8').decode()
+
+    return path_str
