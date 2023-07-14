@@ -13,6 +13,7 @@ class UserConfig(BaseSettings):
     appActivitys : dict = {"test" : "test"}
     low_battery : int = 20
     batteryRemind : bool = True
+    shutdown_in_task_over : bool = False
 
 
 class Config:

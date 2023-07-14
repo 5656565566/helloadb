@@ -96,7 +96,10 @@ def run():
 
                 while any_thread_alive(script.threads.values()):
                     time.sleep(3)
-                
+                    
+                if config.config.shutdown_in_task_over:
+                    os.system('shutdown -s -t 60')
+                        
                 continue
 
 

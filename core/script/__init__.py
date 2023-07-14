@@ -283,13 +283,14 @@ class ScriptManage:
             return (1, RunLoop(loop_num= cmd[1]))
 
         if cmd[0] in ["loopif","条件循环"]:
-            
-
-
+            # TODO 条件校验
             return (1, RunLoopIf(conditions= cmd[1], loop_if= cmd[2:]))
-
+        
+        if cmd[0] in ["poweroff","关机"]:
+            # TODO
+            return (0, ShutdownDevices())
+            
         if cmd[0] in ["run","执行脚本"]:
-
             if temp := self.scripts.get(cmd[1]):
                 return (0, RunScipt(data=temp))
         
@@ -442,8 +443,8 @@ class Func:
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(get_cv2_path(templatePath))
-        target = cv2.imread(get_cv2_path(targetPath))
+        template = imread(templatePath)
+        target = imread(targetPath)
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -479,8 +480,8 @@ class Func:
             logger.opt(colors=True).error(f"未找到 <r>{targetPath}</r>")
             return 0
 
-        template = cv2.imread(get_cv2_path(templatePath))
-        target = cv2.imread(get_cv2_path(targetPath))
+        template = imread(templatePath)
+        target = imread(targetPath)
 
         find_pos = customized_match(target, template, (args.similarity))
 
@@ -566,12 +567,9 @@ def customized_match(target, template, threshold=0.02):
     # 返回匹配位置的坐标
     return (x, y)
 
-def get_cv2_path(path: Path) -> str:
-    # 将Path对象转换为字符串
-    path_str = str(path)
-
-    # 如果路径包含中文或其他非ASCII字符，则进行编码转换
-    if not path_str.isascii():
-        path_str = path_str.encode('utf-8').decode()
-
-    return path_str
+def imread(path: Path):
+    image = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)
+    # imdecode读取的是rgb，如果后续需要opencv处理的话，需要转换成bgr，转换后图片颜色会变化
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    
+    return image

@@ -25,6 +25,12 @@ class SpecialFunc(BaseModel):
     cmd : str
     """命令"""
 
+class ShutdownPC(SpecialFunc):
+    cmd: Optional[str] = "shutdown_pc"
+    
+class ShutdownDevices(SpecialFunc):
+    cmd: Optional[str] = "shutdown_devices"
+
 class GetActivity(SpecialFunc):
     cmd: Optional[str] = "get_activity"
 
