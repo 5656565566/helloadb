@@ -2,3 +2,4 @@ opencv-python
 adbutils
 yaml
 numpy
+requests==2.31.0

@@ -26,7 +26,7 @@ if not tempPath.is_dir():
     os.mkdir("temp")
 
 if not scriptPath.is_dir():
-    os.mkdir("script")
+    os.mkdir("scripts")
     
 if not pluginsPath.is_dir():
     os.mkdir("plugins")
