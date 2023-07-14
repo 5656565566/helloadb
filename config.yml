@@ -1,8 +1,0 @@
-appActivitys:
-  test: test # 启动app必填
-batteryRemind: true
-default_offset: 3
-loglevel: DEBUG
-low_battery: 20
-wifi_devices:
-- 114.51.4.191:810 # Wifi设备表
