@@ -2,7 +2,7 @@ import yaml
 import os
 
 from pathlib import Path
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 from .log import logger
 

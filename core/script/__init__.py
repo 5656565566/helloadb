@@ -532,6 +532,17 @@ class Func:
         self._run_script(args.data.data)
         return 0
     
+    def uiautomator(self, args: GetUiXml):
+        logger.debug(f"执行 GetUiXml")
+        self.device.shell('uiautomator dump /sdcard/ui.xml', timeout=10)
+        self.device.shell(f'pull /sdcard/ui.xml', timeout=10)
+
+        if args.xml:
+            pass
+
+        return 0
+
+    
 def customized_match(target, template, threshold=0.02):
     # 如果目标图像和模板图像都带有透明通道，则需要提取透明通道
     if target.shape[2] == 4 and template.shape[2] == 4:

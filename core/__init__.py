@@ -5,7 +5,7 @@ import time
 import os
 
 from .log import logger, default_filter
-from .script import ScriptManage, Screenshot, Script, GetActivity
+from .script import ScriptManage, Screenshot, Script, GetActivity, GetUiXml
 from .config import config
 from .menu import Menu
 from .plugin import PluginManager
@@ -76,6 +76,12 @@ def run():
                 cmd = cmd.split(" ")
 
                 script.run(int(cmd[1]) - 1, Script(name="run", files=Path(os.getcwd()), data = [GetActivity()]))
+
+            if "uiautomator" in cmd:
+
+                cmd = cmd.split(" ")
+
+                script.run(int(cmd[1]) - 1, Script(name="run", files=Path(os.getcwd()), data = [GetUiXml()]))
 
             if cmd == "reload":
                 script.reload()

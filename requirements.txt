@@ -1,5 +1,7 @@
 opencv-python
 adbutils
-yaml
+pyyaml
 numpy
 requests==2.31.0
+loguru
+pydantic-settings

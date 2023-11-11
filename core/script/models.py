@@ -126,3 +126,8 @@ class RunLoopIf(SpecialFunc):
 class RunScipt(SpecialFunc):
     cmd: Optional[str] =  "run_scipt"
     data : Optional[Script] = None
+
+
+class GetUiXml(BasicAdbFunc):
+    cmd: Optional[str] =  "uiautomator"
+    xml: Optional[str] = None

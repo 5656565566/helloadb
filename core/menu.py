@@ -20,6 +20,7 @@ class Menu:
         if cmd == "help":
             print("list                列出脚本")
             print("run 数字id 循环次数 执行脚本 (使用 list 获取循环次数)")
+            print("uiautomator 设备id  获取前台 Ui xml")
             print("screenshot 设备id   截图 (使用画图等软件处理后可用于找图 请勿压缩图片)")
             print("getactivity 设备id  获取当前屏幕上的app的activity")
             print("test                测试设备")
